@@ -1,6 +1,6 @@
-DROP DATABASE IF EXISTS testing_system;
-CREATE DATABASE testing_system;
-USE testing_system;
+DROP DATABASE IF EXISTS testing_system_assignment_2;
+CREATE DATABASE testing_system_assignment_2;
+USE testing_system_assignment_2;
 
  -- create table department
 DROP TABLE IF EXISTS department;
