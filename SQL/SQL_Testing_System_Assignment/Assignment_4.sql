@@ -172,8 +172,8 @@ VALUES						('kỹ thuật'								,'4'),
  
 INSERT INTO gruop_account	(gruop_id,				account_id)
 VALUES						('1'						,'1'),
-							('1'						,'1'),
-							('1'						,'1'),
+							('2'						,'1'),
+							('6'						,'1'),
                             ('4'						,'4'),
                             ('6'						,'5'),
                             ('7'						,'6'),
@@ -334,11 +334,15 @@ FROM 			question a
  JOIN 			question
  ON 			answer.question_id = question.question_id
 GROUP BY 		answer.question_id
-HAVING 			COUNT(answer.question_id) =  (SELECT MAX(dem) FROM	(SELECT answer.question_id, count(answer.question_id) AS dem 
-																		FROM answer
-																		JOIN question
-																		ON answer.question_id = question.question_id
-																		GROUP BY answer.question_id) AS count);
+HAVING 			COUNT(answer.question_id) =  (
+												SELECT MAX(dem) 
+												FROM	(SELECT answer.question_id, count(answer.question_id) AS dem 
+															FROM answer
+															JOIN question
+															ON answer.question_id = question.question_id
+															GROUP BY answer.question_id
+														)	AS count
+												);
     -- cach khac
 SELECT 		a.question_id,a.content,count(b.question_id) 'so cau tra loi'
 FROM 		question a
@@ -351,11 +355,11 @@ LIMIT 		2
 
 -- Question 9: Thống kê số lượng account trong mỗi group
 
-SELECT 				gruop_account.gruop_id,COUNT(gruop_account.account_id) so_luong_account 
-FROM 				account  
-JOIN 				gruop_account 
-ON 					account.account_id =gruop_account.account_id
-GROUP BY 			gruop_account.account_id
+SELECT 				g.gruop_id,COUNT(g.account_id) so_luong_account 
+FROM 				account  a
+JOIN 				gruop_account g
+ON 					a.account_id =g.account_id
+GROUP BY 			g.account_id
 ORDER BY 			so_luong_account DESC
 ;
 
@@ -373,22 +377,119 @@ HAVING				COUNT(b.position_id) = (SELECT MIN(SL_NV) FROM (SELECT 		a.position_id
 																GROUP BY 	b.position_id) AS D);
                                                                 
 -- Question 11: Thống kê mỗi phòng ban có bao nhiêu dev, test, scrum master, PM
+SELECT 	d.department_id,d.department_name, p.position_name, count(p.position_name) 
+FROM 	`account` a
+JOIN 	department d ON a.department_id = d.department_id
+JOIN 	position p ON a.position_id = p.position_id
+GROUP BY 	d.department_id, p.position_id
+;
 
-SELECT		a.department_id,a.department_name,COUNT(b.position_id)
-FROM		account b
-JOIN 		department a 	ON 	a.department_id=b.department_id
-GROUP BY	b.department_id,b.position_id
-JOIN		position c		ON b.position_id=c.position_id
-GROUP BY	COUNT(b.position_id)
+-- Question 12: Lấy thông tin chi tiết của câu hỏi bao gồm: thông tin cơ bản của question, loại câu hỏi, ai là người tạo ra câu hỏi, câu trả lời là gì, ...
+
+SELECT		q.question_id,q.content,c.category_name,t.type_name,a.full_name,q.create_date
+FROM		 question q
+LEFT JOIN	category_question c ON q.category_id=c.category_id
+JOIN		type_question t ON t.type_id=q.type_id
+JOIN		account a ON q.creator_id=a.account_id
+;
+-- Question 13: Lấy ra số lượng câu hỏi của mỗi loại tự luận hay trắc nghiệm
+SELECT t.type_name,COUNT(q.content)
+FROM		 question q
+JOIN		type_question t ON t.type_id=q.type_id
+GROUP BY 	t.type_name
+HAVING		COUNT(q.content)
+;
+
+-- Question 14:Lấy ra group không có account nào
+
+SELECT 		g.gruop_id,g.gruop_name
+FROM		gruop g
+ LEFT JOIN 	gruop_account ga ON ga.gruop_id = g.gruop_id
+WHERE		ga.gruop_id IS NULL
+;
+
+-- Question 15: Lấy ra group không có account nào
+
+SELECT 		g.gruop_id,g.gruop_name
+FROM		gruop_account ga 
+RIGHT JOIN	gruop g ON ga.gruop_id = g.gruop_id
+WHERE		ga.gruop_id IS NULL
+;
+
+-- Question 16: Lấy ra question không có answer nào
+
+SELECT q.question_id,q.content
+FROM question q
+LEFT JOIN answer a ON q.question_id=a.question_id
+WHERE a.question_id IS NULL
+;
+
+									-- EXERCISE 2: UNION
+			-- QUESTION 17:
+            
+			-- a) Lấy các account thuộc nhóm thứ 1
+
+SELECT 		g.gruop_id,g.account_id,a.full_name,a.email,a.username,a.department_id,a.position_id,a.create_date
+FROM 		gruop_account g
+JOIN 		account a
+ON 			a.account_id = g.account_id
+GROUP BY	g.gruop_id
+HAVING 		g.gruop_id='1'
+;
+			-- b) Lấy các account thuộc nhóm thứ 2
+            
+SELECT 		g.gruop_id,g.account_id,a.full_name,a.email,a.username,a.department_id,a.position_id,a.create_date
+FROM 		gruop_account g
+JOIN 		account a
+ON 			a.account_id = g.account_id
+HAVING 		g.gruop_id='2'
+;
+			-- c) Ghép 2 kết quả từ câu a) và câu b) sao cho không có record nào trùng nhau
+            
+ SELECT 		g.gruop_id,g.account_id,a.full_name,a.email,a.username,a.department_id,a.position_id,a.create_date
+FROM 		gruop_account g
+JOIN 		account a
+ON 			a.account_id = g.account_id
+GROUP BY	g.gruop_id
+HAVING 		g.gruop_id='1'
+
+UNION
+
+SELECT 		g.gruop_id,g.account_id,a.full_name,a.email,a.username,a.department_id,a.position_id,a.create_date
+FROM 		gruop_account g
+JOIN 		account a
+ON 			a.account_id = g.account_id
+HAVING 		g.gruop_id='2'
+;
+
+				-- Question 18:
+			-- a) Lấy các group có lớn hơn 1 thành viên
+SELECT 		gruop_id,COUNT(account_id) SL_thanh_vien
+FROM 		gruop_account
+GROUP BY 	gruop_id
+HAVING 		COUNT(account_id)>1
+;
+
+			-- b) Lấy các group có nhỏ hơn 7 thành viên
+            
+SELECT 		gruop_id,COUNT(account_id) SL_thanh_vien
+FROM 		gruop_account
+GROUP BY 	gruop_id
+HAVING 		COUNT(account_id)<7
+;
+
+			-- c) Ghép 2 kết quả từ câu a) và câu b)
+            
+SELECT 		gruop_id,COUNT(account_id) SL_thanh_vien
+FROM 		gruop_account
+GROUP BY 	gruop_id
+HAVING 		COUNT(account_id)>1
+
+UNION ALL
+SELECT 		gruop_id,COUNT(account_id) SL_thanh_vien
+FROM 		gruop_account
+GROUP BY 	gruop_id
+HAVING 		COUNT(account_id)<7
 ;
 
 
-
-
-
-
-
-
-
-
- 
