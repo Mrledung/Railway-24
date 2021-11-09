@@ -1,6 +1,6 @@
-DROP DATABASE IF EXISTS extra_assignment_1_2;
-CREATE DATABASE		extra_assignment_1_2;
-USE extra_assignment_1_2;
+DROP DATABASE IF EXISTS extra_assignment;
+CREATE DATABASE		extra_assignment;
+USE extra_assignment;
 
 -- EXERCISE 1:DESIGN A TABLE
 
